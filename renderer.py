@@ -65,15 +65,12 @@ def render(viewport: Viewport):
     # For each pixel of the image:
     for i, y in enumerate(v):
         for j, x in enumerate(h):
-            pixel = np.array([x, y, 0])  # D (for destination) | z = 0 since the camera is on the x, y plane | Might add tilted camera support later
+            pixel = np.array([x, y, 0])   # D (for destination) | z = 0 since the camera is on the x, y plane | Might add tilted camera support later
             origin = viewport.camera.pos  # O (for origin
             direction = normalize(pixel - origin)  # d = D - O / || D - O || (for direction)
 
             dist = nearest_intersect_object(viewport.objects, origin, direction)[1] / view_dist
             set_color(i, j, image, 1 - min(dist, 1))
 
-        print(f"progress: {(i + 1) * 100 // viewport.height}%")
+        # print(f"progress: {(i + 1) * 100 // viewport.height}%")
     return image
-
-
-plt.imsave(f'img/image.png', render(viewport))
