@@ -11,6 +11,10 @@ def normalize(vector):
     return vector / np.linalg.norm(vector)
 
 
+def clamp(value):
+    return min(max(value, 0), 1)
+
+
 def set_unicolor(x, y, image, color):
     image[x, y, 0] = color
     image[x, y, 1] = color
@@ -18,9 +22,9 @@ def set_unicolor(x, y, image, color):
 
 
 def set_color(x, y, image, color):
-    image[x, y, 0] = max(0, min(color[0], 1))
-    image[x, y, 1] = max(0, min(color[1], 1))
-    image[x, y, 2] = max(0, min(color[2], 1))
+    image[x, y, 0] = clamp(color[0])
+    image[x, y, 1] = clamp(color[1])
+    image[x, y, 2] = clamp(color[2])
 
 
 # ----[ INTERSECTION FUNCTIONS ]----
@@ -58,26 +62,29 @@ def sphere_intersection(center, radius, ray_origin, ray_direction):
 def get_pixel_color(viewport: Viewport, ray_origin, ray_direction):
 
     nearest_object, min_dist = nearest_intersect_object(viewport.objects, ray_origin, ray_direction)
-    color = (0, 0, 0)
+    color = [0, 0, 0]
 
     if nearest_object is None:
         return 0, 0, 0
 
-    intersection = ray_origin + ray_direction * min_dist
-    normal = normalize(intersection - nearest_object["center"])
-    shifted_point = intersection + 1e-5 * normal  # We slightly shift the point to avoid the sphere from coliding with itself
-
     for light in viewport.lights:
-        direction_to_light = normalize(light.pos - intersection)
+        intersection = ray_origin + min_dist * ray_direction
 
-        obs, obs_dist = nearest_intersect_object(viewport.objects, shifted_point, direction_to_light)
-        light_dist = np.linalg.norm(light.pos - intersection)
-        is_shadowed = min_dist < light_dist
-        if not is_shadowed:  # Might add emmisive materials later.
-            color = light.get_light_amount(light_dist)
+        normal_to_surface = normalize(intersection - nearest_object['center'])
+        shifted_point = intersection + 1e-5 * normal_to_surface  # if there is strange self shadowing, raducing 1e-5 might help
+        intersection_to_light = normalize(light.pos - shifted_point)
+
+        _, min_distance = nearest_intersect_object(viewport.objects, shifted_point, intersection_to_light)
+        intersection_to_light_distance = np.linalg.norm(light.pos - intersection)
+        is_shadowed = min_distance < intersection_to_light_distance
+
+        if is_shadowed:
+            continue
         else:
-            if obs is not None:
-                print(obs["id"])
+            add_color = light.get_light_amount(intersection_to_light_distance)
+            color[0] += clamp(add_color[0])
+            color[1] += clamp(add_color[1])
+            color[2] += clamp(add_color[2])
 
     return color
 
