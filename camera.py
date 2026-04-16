@@ -3,9 +3,8 @@ import numpy as np
 
 class Camera:
 
-    def __init__(self, pos, screen_dist=1, screen_pos=(0, 0), screen_size=1):
+    def __init__(self, pos, screen_pos=(0, 0), screen_size=1):
         self.pos = np.array(pos)
-        self.screen_dist = screen_dist   # The distance of the screen
         self.screen_pos = screen_pos    # The pos of the screen relative to the camera
         self.screen_size = screen_size
         self.screen = (0, 0, 0, 0)
