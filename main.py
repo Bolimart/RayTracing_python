@@ -9,17 +9,13 @@ from viewport import Viewport
 camera = Camera([0, 0, 1], screen_size=1)
 # All objects are sphere for now, but I might add support for plane and triangles later
 objects = [
-    Sphere([0, 0, -7], 0.9, Material([0.1, 0, 0], [0.7, 0, 0], [1, 1, 1], 100))
-    #{'center': np.array([0, -2, -4]), 'radius': 0.95},
-    #{'center': np.array([0, 0, -100]), 'radius': 0.5}
+    Sphere([0, 0, -150], 100, Material([0.1, 0, 0], [0.7, 0, 0], [1, 1, 1], 100)),
+    Sphere([0, 0, -7], 1, Material([0.1, 0, 0], [0.7, 0, 0], [1, 1, 1], 100))
 ]
 
-for i in range(30):
-    lights = [
-        Light([0, i/10, -10 + i/10], color=(0.5, 0.5, 0.5), light_limit=5.8, intensity=0.8),
-        #Light([2, -2, -5], color=(1, 0.12, 0.06), light_limit=1, intensity=0.5)
-    ]
-    viewport = Viewport(objects, camera, lights)
-    plt.imsave(f'img/image_rt{i}.png', render(viewport))
-#plt.imsave('img/image_ortho.png', render_ortho_depth_map(viewport_ortho, 6, True))
-#plt.imsave('img/image.png', render_depth_map(viewport, 6, True))
+lights = [
+    Light([2, 4, -1], color=(1, 1, 1), light_limit=80, intensity=2),
+    #Light([2, -2, -5], color=(1, 0.12, 0.06), light_limit=1, intensity=0.5)
+]
+viewport = Viewport(objects, camera, lights, height=720, width=1080)
+plt.imsave(f'img/image_rt.png', render(viewport))

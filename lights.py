@@ -11,5 +11,5 @@ class Light:
 
 
     def get_light_amount(self, dist):
-        b = dist / self.limit * self.intensity
+        b = dist / self.limit
         return self.color[0] - self.color[0] * b, self.color[1] - self.color[1] * b, self.color[2] - self.color[2] * b

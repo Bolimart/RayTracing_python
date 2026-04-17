@@ -56,7 +56,7 @@ def get_pixel_color(viewport: Viewport, ray_origin, ray_direction):
         intersection = ray_origin + min_dist * ray_direction
 
         normal_to_surface = normalize(intersection - nearest_object.pos)
-        shifted_point = intersection + 1e-5 * normal_to_surface  # if there is strange self shadowing, raducing 1e-5 might help
+        shifted_point = intersection + (1e-5 * normal_to_surface)  # if there is strange self shadowing, raducing 1e-5 might help
         intersection_to_light = normalize(light.pos - shifted_point)
 
         _, min_distance = nearest_intersect_object(viewport.objects, shifted_point, intersection_to_light)
