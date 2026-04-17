@@ -1,6 +1,4 @@
 import numpy as np
-import matplotlib.pyplot as plt
-
 from objects import RenderObject
 from viewport import Viewport
 
@@ -13,10 +11,6 @@ def normalize(vector):
     return vector / np.linalg.norm(vector)
 
 
-def clamp(value):
-    return min(max(value, 0), 1)
-
-
 def set_unicolor(x, y, image, color):
     image[x, y, 0] = color
     image[x, y, 1] = color
@@ -24,9 +18,7 @@ def set_unicolor(x, y, image, color):
 
 
 def set_color(x, y, image, color):
-    image[x, y, 0] = clamp(color[0])
-    image[x, y, 1] = clamp(color[1])
-    image[x, y, 2] = clamp(color[2])
+    image[x, y] = np.clip(color, 0, 1)
 
 
 # ----[ INTERSECTION FUNCTIONS ]----
@@ -55,7 +47,7 @@ def get_pixel_color(viewport: Viewport, ray_origin, ray_direction):
     for light in viewport.lights:
         intersection = ray_origin + min_dist * ray_direction
 
-        normal_to_surface = normalize(intersection - nearest_object.pos)
+        normal_to_surface = nearest_object.normal(intersection)
         shifted_point = intersection + (1e-5 * normal_to_surface)  # if there is strange self shadowing, raducing 1e-5 might help
         intersection_to_light = normalize(light.pos - shifted_point)
 
@@ -66,10 +58,8 @@ def get_pixel_color(viewport: Viewport, ray_origin, ray_direction):
         if is_shadowed:
             continue
         else:
-            add_color = light.get_light_amount(intersection_to_light_distance)
-            color[0] += clamp(add_color[0])
-            color[1] += clamp(add_color[1])
-            color[2] += clamp(add_color[2])
+            illumination = nearest_object.BP_ilumination_point(light, viewport.camera, intersection, normal_to_surface, intersection_to_light)
+            color += np.clip(illumination, 0, 1)
 
     return color
 

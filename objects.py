@@ -1,5 +1,11 @@
+from lights import Light
 from material import Material
 import numpy as np
+
+
+def normalize(vector):
+    # Vector / length of the vector
+    return vector / np.linalg.norm(vector)
 
 
 class RenderObject:
@@ -11,6 +17,23 @@ class RenderObject:
 
     def intersect(self, ray_origin, ray_direction):
         pass
+
+
+    def normal(self, intersection):
+        return [0, 0, 0]
+
+
+    def BP_ilumination_point(self, light: Light, camera, intersection, normal_to_surface, intersection_to_light):
+
+        ambiant = self.material.ambient * light.material.ambient
+        diffuse = self.material.diffuse * light.material.diffuse * np.dot(intersection_to_light, normal_to_surface)
+        intersection_to_camera = normalize(camera.pos - intersection)
+        H = normalize(intersection_to_light + intersection_to_camera)
+        specular = self.material.specular * light.material.specular * np.dot(normal_to_surface, H) ** (self.material.shininess / 4)
+
+        illumination = np.zeros(3) + ambiant + diffuse + (specular * self.material.shininess / 100)
+        return illumination
+
 
 
 class Sphere(RenderObject):
@@ -35,3 +58,7 @@ class Sphere(RenderObject):
             if t1 > 0 and t2 > 0:
                 return min(t1, t2)
         return None
+
+
+    def normal(self, intersection):
+        return normalize(intersection - self.pos)
