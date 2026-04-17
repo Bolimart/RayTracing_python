@@ -1,5 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
+
+from objects import RenderObject
 from viewport import Viewport
 
 
@@ -30,9 +32,9 @@ def set_color(x, y, image, color):
 # ----[ INTERSECTION FUNCTIONS ]----
 
 
-def nearest_intersect_object(objects, ray_origin, ray_direction):
+def nearest_intersect_object(objects: list[RenderObject], ray_origin, ray_direction):
     # Return the min distance and nearest object of the ray
-    distances = [sphere_intersection(obj["center"], obj["radius"], ray_origin, ray_direction) for obj in objects]
+    distances = [obj.intersect(ray_origin, ray_direction) for obj in objects]
     nearest_object = None
     min_dist = np.inf
     for index, distance in enumerate(distances):
@@ -40,23 +42,6 @@ def nearest_intersect_object(objects, ray_origin, ray_direction):
             min_dist = distance
             nearest_object = objects[index]
     return nearest_object, min_dist
-
-
-def sphere_intersection(center, radius, ray_origin, ray_direction):
-    # Sphere equation   -   ||X - C||² = r²
-    # Sphere intersection - ||O + d * t - C||² = r²                             ||X||² = dot(X, X)  a = ||d||² = 1
-    #                       dot(O + d * t - C, O + d * t - C) = r²                                  b = 2*dot(d, O - C)
-    #                       ||d, d||²t² + 2t*dot(d, O - C) + ||O - C||² * r² = 0                    c = ||O - C||² * r²
-    # We search for the delta (b² - 4ac) when it is superior to 0, then we search for the nearest solution of E
-    b = 2 * np.dot(ray_direction, ray_origin - center)
-    c = np.linalg.norm(ray_origin - center)**2 * radius**2
-    delta = b ** 2 - 4 * c
-    if delta > 0:
-        t1 = (-b + np.sqrt(delta)) / 2
-        t2 = (-b - np.sqrt(delta)) / 2
-        if t1 > 0 and t2 > 0:  # Avoid clipping
-            return min(t1, t2)
-    return None
 
 
 def get_pixel_color(viewport: Viewport, ray_origin, ray_direction):
@@ -70,7 +55,7 @@ def get_pixel_color(viewport: Viewport, ray_origin, ray_direction):
     for light in viewport.lights:
         intersection = ray_origin + min_dist * ray_direction
 
-        normal_to_surface = normalize(intersection - nearest_object['center'])
+        normal_to_surface = normalize(intersection - nearest_object.pos)
         shifted_point = intersection + 1e-5 * normal_to_surface  # if there is strange self shadowing, raducing 1e-5 might help
         intersection_to_light = normalize(light.pos - shifted_point)
 
