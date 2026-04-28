@@ -5,6 +5,9 @@ from viewport import Viewport
 
 # ----[ UTILITIES ]----
 
+def reflected(vector, axis):
+    return vector - 2 * np.dot(vector, axis) * axis
+
 
 def normalize(vector):
     # Vector / length of the vector
@@ -36,13 +39,35 @@ def nearest_intersect_object(objects: list[RenderObject], ray_origin, ray_direct
     return nearest_object, min_dist
 
 
-def get_pixel_color(viewport: Viewport, ray_origin, ray_direction):
-
+def get_pixel_color(viewport: Viewport, ray_origin, ray_direction, r=1, n=3):
+    
+    
     nearest_object, min_dist = nearest_intersect_object(viewport.objects, ray_origin, ray_direction)
-    color = [0, 0, 0]
+    if nearest_object is None:
+        return np.array([0.0, 0.0, 0.0])
+    if n == 0 or nearest_object.material.reflection == 0:
+        return get_point_color(viewport, ray_origin, ray_direction, nearest_object, min_dist)
+    
+    else:
+        intersection = ray_origin + min_dist * ray_direction
+        normal_to_surface = nearest_object.normal(intersection)
+        shifted_point = intersection + (1e-5 * normal_to_surface)
+        direction = reflected(ray_direction, normal_to_surface)
+        
+        i0 = get_point_color(viewport, ray_origin, ray_direction, nearest_object, min_dist) # the ilumination of the point
+        reflection = nearest_object.material.reflection # The reflection indice of the object
+        i1 = get_pixel_color(viewport, shifted_point, direction, r * reflection, n-1) # The ilumination of the reflected object
+        
+        return i0 + r*i1
+    
+    
+
+def get_point_color(viewport: Viewport, ray_origin, ray_direction, nearest_object, min_dist):
+        
+    color = np.array([0.0, 0.0, 0.0])
 
     if nearest_object is None:
-        return 0, 0, 0
+        return color
 
     for light in viewport.lights:
         intersection = ray_origin + min_dist * ray_direction
