@@ -1,4 +1,5 @@
 import numpy as np
+from multiprocessing import Pool, get_context
 from objects import RenderObject
 from viewport import Viewport
 
@@ -142,10 +143,35 @@ def render(viewport, iteration=0, debug=False):
             origin = viewport.camera.pos  # O (for origin
             direction = normalize(pixel - origin)  # d = D - O / || D - O || (for direction)
 
-            color = get_pixel_color(viewport, origin, direction)
+            color = get_pixel_color(viewport, origin, direction, n=iteration)
             set_color(i, j, image, color)
 
         if debug:
             print(f"progress: {(i + 1) * 100 // viewport.height}%")
 
+    return image
+
+# The parralelisation was Vibe-coded as I don't know how to do it in python yet
+def render_row(args):
+    viewport, y, i, h, iteration = args
+    row = np.zeros((viewport.width, 3))
+    origin = viewport.camera.pos
+    for j, x in enumerate(h):
+        pixel = np.array([x, y, 0])
+        direction = normalize(pixel - origin)
+        color = get_pixel_color(viewport, origin, direction, n=iteration)
+        row[j] = np.clip(color, 0, 1)
+    return i, row
+
+
+def render_mult_thread(viewport, debug=False, iteration=3):
+    image = np.zeros((viewport.height, viewport.width, 3))
+    v, h = viewport.camera.make_pos_array(viewport.height, viewport.width)
+    args = [(viewport, y, i, h, iteration) for i, y in enumerate(v)]
+
+    with get_context("fork").Pool() as pool:  # force fork on Linux
+        for i, row in pool.imap_unordered(render_row, args):
+            image[i] = row
+            if debug:
+                print(f"progress: {(i + 1) * 100 // viewport.height}%")
     return image
